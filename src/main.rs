@@ -17,7 +17,10 @@ fn collect_distances(targets: &Vec<[f64; 26]>, sources: &Vec<[f64; 26]>) -> Vec<
         });
     });
 
-    distances.into_inner().unwrap()
+    let mut send_distance = distances.into_inner().unwrap();
+    send_distance.sort_by(|a, b| a[0].partial_cmp(&b[0]).unwrap());
+
+    send_distance
 }
 
 fn estimate_distance(target: &[f64; 26], source: &[f64; 26]) -> [f64; 3] {
@@ -30,7 +33,35 @@ fn estimate_distance(target: &[f64; 26], source: &[f64; 26]) -> [f64; 3] {
 
     let distance = sum.sqrt();
 
-    [source[0].clone(), target[0].clone(), distance]
+    [target[0].clone(), source[0].clone(), distance]
+}
+
+
+fn classify_sort_data(distances: &Vec<[f64; 3]>, ) -> Vec<Vec<[f64; 3]>> {
+    let mut data = distances.clone();
+    let mut sorted_data: Vec<Vec<[f64; 3]>> = Vec::new();
+
+    // Group the sorted data by the first element
+    let mut current_group: Vec<[f64; 3]> = Vec::new();
+    let mut current_value = data[0][0];
+
+    for item in data {
+        if item[0] == current_value {
+            current_group.push(item);
+        } else {
+            sorted_data.push(current_group);
+            current_group = vec![item];
+            current_value = item[0];
+        }
+    }
+
+    sorted_data.push(current_group); // Add the last group
+
+    for mut target in &mut sorted_data {
+        target.sort_by(|a, b| a[2].partial_cmp(&b[2]).unwrap())
+    }
+
+    sorted_data
 }
 
 fn main() {
@@ -68,7 +99,16 @@ fn main() {
 
     let distances = collect_distances(&targets, &sources);
 
-    println!("Distances: {:?}", distances);
+    let data: Vec<[f64; 3]> = vec![
+        [1.0, 3.0, 6666.0],
+        [1.0, 4.0, 6666.0],
+        [1.0, 5.0, 6666.0],
+        [2.0, 3.0, 6666.0],
+        [2.0, 4.0, 6666.0],
+        [2.0, 5.0, 6666.0],
+    ];
+
+    println!("Distances: {:#?}", classify_sort_data(&distances));
 }
 
 
